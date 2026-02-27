@@ -1,0 +1,325 @@
+name: AI Documentation Intelligence System
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+  release:
+    types: [ published ]
+
+env:
+  NODE_VERSION: '18'
+  API_URL: ${{ secrets.API_URL }}
+  WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+
+jobs:
+  process-event:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for diff analysis
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm ci
+
+    - name: Extract event data
+      id: event-data
+      run: |
+        # Determine event type and extract relevant data
+        EVENT_TYPE="${{ github.event_name }}"
+        REPO_NAME="${{ github.repository }}"
+        REPO_OWNER="${{ github.repository_owner }}"
+        COMMIT_SHA="${{ github.sha }}"
+        PR_NUMBER="${{ github.event.number }}"
+        RELEASE_TAG="${{ github.event.release.tag_name }}"
+        
+        # Create event payload
+        cat > event-payload.json << EOF
+        {
+          "eventType": "$EVENT_TYPE",
+          "repository": "$REPO_NAME",
+          "owner": "$REPO_OWNER",
+          "commitSha": "$COMMIT_SHA",
+          "prNumber": "$PR_NUMBER",
+          "releaseTag": "$RELEASE_TAG",
+          "actor": "${{ github.actor }}",
+          "timestamp": "${{ github.event.head_commit.timestamp || github.event.created_at }}"
+        }
+        EOF
+        
+        echo "event-type=$EVENT_TYPE" >> $GITHUB_OUTPUT
+        echo "repo-name=$REPO_NAME" >> $GITHUB_OUTPUT
+        echo "commit-sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+
+    - name: Generate diff for push events
+      if: github.event_name == 'push'
+      run: |
+        # Get previous commit for diff
+        PREV_COMMIT=$(git rev-parse HEAD~1)
+        echo "Previous commit: $PREV_COMMIT"
+        
+        # Generate diff
+        git diff $PREV_COMMIT HEAD > changes.diff
+        
+        # Get changed files
+        git diff --name-only $PREV_COMMIT HEAD > changed-files.txt
+        
+        # Get commit messages
+        git log --oneline $PREV_COMMIT..HEAD > commit-messages.txt
+        
+        echo "Diff generated successfully"
+        echo "Changed files:"
+        cat changed-files.txt
+
+    - name: Generate diff for pull request events
+      if: github.event_name == 'pull_request'
+      run: |
+        # Get PR diff
+        PR_NUMBER="${{ github.event.number }}"
+        BASE_BRANCH="${{ github.event.base.ref }}"
+        HEAD_BRANCH="${{ github.event.head.ref }}"
+        
+        echo "Processing PR #$PR_NUMBER from $HEAD_BRANCH to $BASE_BRANCH"
+        
+        # Fetch PR data
+        git fetch origin $BASE_BRANCH
+        git fetch origin pull/$PR_NUMBER/head:$HEAD_BRANCH
+        
+        # Generate diff
+        git diff origin/$BASE_BRANCH...$HEAD_BRANCH > changes.diff
+        
+        # Get changed files
+        git diff --name-only origin/$BASE_BRANCH...$HEAD_BRANCH > changed-files.txt
+        
+        # Get PR description
+        echo "${{ github.event.body }}" > pr-description.md
+        
+        echo "PR diff generated successfully"
+
+    - name: Get commit history for release events
+      if: github.event_name == 'release'
+      run: |
+        # Get previous release tag
+        RELEASE_TAG="${{ github.event.release.tag_name }}"
+        
+        # Try to get previous tag
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+        
+        if [ -n "$PREV_TAG" ]; then
+          echo "Getting commits between $PREV_TAG and $RELEASE_TAG"
+          git log --oneline $PREV_TAG..$RELEASE_TAG > commit-messages.txt
+        else
+          echo "No previous tag found, getting last 50 commits"
+          git log --oneline -50 > commit-messages.txt
+        fi
+        
+        # Get release notes
+        echo "${{ github.event.release.body }}" > release-notes.md
+        
+        echo "Release commit history generated"
+
+    - name: Call AI processing service
+      run: |
+        # Prepare payload for AI service
+        EVENT_TYPE="${{ steps.event-data.outputs.event-type }}"
+        
+        # Create comprehensive payload
+        cat > ai-payload.json << EOF
+        {
+          "eventType": "$EVENT_TYPE",
+          "repository": "${{ steps.event-data.outputs.repo-name }}",
+          "owner": "${{ github.repository_owner }}",
+          "commitSha": "${{ steps.event-data.outputs.commit-sha }}",
+          "prNumber": "${{ github.event.number }}",
+          "releaseTag": "${{ github.event.release.tag_name }}",
+          "actor": "${{ github.actor }}",
+          "timestamp": "${{ github.event.head_commit.timestamp || github.event.created_at }}",
+          "diff": $(cat changes.diff | jq -Rs .),
+          "changedFiles": $(cat changed-files.txt | jq -R . | jq -s .),
+          "commitMessages": $(cat commit-messages.txt | jq -R . | jq -s .),
+          "prDescription": $(if [ -f pr-description.md ]; then cat pr-description.md | jq -Rs .; else echo "null"; fi),
+          "releaseNotes": $(if [ -f release-notes.md ]; then cat release-notes.md | jq -Rs .; else echo "null"; fi)
+        }
+        EOF
+        
+        echo "Calling AI service with payload:"
+        cat ai-payload.json | jq .
+        
+        # Call AI service
+        RESPONSE=$(curl -s -X POST \
+          "${{ secrets.API_URL }}/api/process-event" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${{ secrets.WEBHOOK_SECRET }}" \
+          -d @ai-payload.json)
+        
+        echo "AI Service Response:"
+        echo "$RESPONSE" | jq .
+        
+        # Save response for next steps
+        echo "$RESPONSE" > ai-response.json
+
+    - name: Process AI response
+      run: |
+        # Parse AI response
+        if [ -f ai-response.json ]; then
+          # Extract generated content
+          DOCUMENTATION_UPDATE=$(jq -r '.documentationUpdate // empty' ai-response.json)
+          PR_SUMMARY=$(jq -r '.prSummary // empty' ai-response.json)
+          RELEASE_NOTES=$(jq -r '.releaseNotes // empty' ai-response.json)
+          
+          # Save generated content to files
+          if [ -n "$DOCUMENTATION_UPDATE" ] && [ "$DOCUMENTATION_UPDATE" != "null" ]; then
+            echo "$DOCUMENTATION_UPDATE" > generated-docs-update.md
+            echo "Documentation update generated"
+          fi
+          
+          if [ -n "$PR_SUMMARY" ] && [ "$PR_SUMMARY" != "null" ]; then
+            echo "$PR_SUMMARY" > generated-pr-summary.md
+            echo "PR summary generated"
+          fi
+          
+          if [ -n "$RELEASE_NOTES" ] && [ "$RELEASE_NOTES" != "null" ]; then
+            echo "$RELEASE_NOTES" > generated-release-notes.md
+            echo "Release notes generated"
+          fi
+        fi
+
+    - name: Update documentation for push events
+      if: github.event_name == 'push' && hashFiles('generated-docs-update.md') != ''
+      run: |
+        echo "Updating documentation..."
+        
+        # Check if README exists
+        if [ -f README.md ]; then
+          # Backup original README
+          cp README.md README-backup.md
+          
+          # Append or update documentation
+          if grep -q "## AI-Generated Updates" README.md; then
+            # Update existing section
+            sed -i '/## AI-Generated Updates/,/##/c\
+## AI-Generated Updates\
+\
+'"$(cat generated-docs-update.md)"'\
+\
+##' README.md
+          else
+            # Add new section
+            echo "" >> README.md
+            echo "## AI-Generated Updates" >> README.md
+            echo "" >> README.md
+            cat generated-docs-update.md >> README.md
+          fi
+          
+          # Commit changes
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add README.md
+          git commit -m "AI: Update documentation [skip ci]"
+          git push
+          
+          echo "Documentation updated and committed"
+        else
+          echo "README.md not found, skipping documentation update"
+        fi
+
+    - name: Post PR comment
+      if: github.event_name == 'pull_request' && hashFiles('generated-pr-summary.md') != ''
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          
+          if (fs.existsSync('generated-pr-summary.md')) {
+            const prSummary = fs.readFileSync('generated-pr-summary.md', 'utf8');
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## 🤖 AI-Generated PR Summary\n\n${prSummary}\n\n---\n*Generated by AI Documentation Intelligence System*`
+            });
+            
+            console.log('PR comment posted successfully');
+          }
+
+    - name: Update release description
+      if: github.event_name == 'release' && hashFiles('generated-release-notes.md') != ''
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          
+          if (fs.existsSync('generated-release-notes.md')) {
+            const releaseNotes = fs.readFileSync('generated-release-notes.md', 'utf8');
+            
+            // Get current release info
+            const release = await github.rest.repos.getRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: context.payload.release.id
+            });
+            
+            // Update release with AI-generated notes
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: context.payload.release.id,
+              body: `## 🤖 AI-Generated Release Notes\n\n${releaseNotes}\n\n---\n\n${release.data.body}`
+            });
+            
+            console.log('Release description updated successfully');
+          }
+
+    - name: Handle errors
+      if: failure()
+      run: |
+        echo "AI Documentation processing failed"
+        echo "Check the logs above for details"
+        
+        # Create error report
+        cat > error-report.json << EOF
+        {
+          "eventType": "${{ github.event_name }}",
+          "repository": "${{ github.repository }}",
+          "commitSha": "${{ github.sha }}",
+          "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "error": "Processing failed in GitHub Actions",
+          "workflowRun": "${{ github.run_id }}"
+        }
+        EOF
+        
+        # Try to notify error service
+        curl -s -X POST \
+          "${{ secrets.API_URL }}/api/log-error" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${{ secrets.WEBHOOK_SECRET }}" \
+          -d @error-report.json || echo "Failed to log error"
+
+    - name: Cleanup
+      if: always()
+      run: |
+        # Clean up temporary files
+        rm -f changes.diff changed-files.txt commit-messages.txt
+        rm -f pr-description.md release-notes.md
+        rm -f event-payload.json ai-payload.json ai-response.json
+        rm -f generated-docs-update.md generated-pr-summary.md generated-release-notes.md
+        rm -f error-report.json README-backup.md
+        
+        echo "Cleanup completed"
