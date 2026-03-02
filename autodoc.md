@@ -1,129 +1,127 @@
-# Project Documentation
+# Application Documentation
 
-This document provides a comprehensive overview of the `app.py` Python module, detailing its functions and classes as defined in the provided source code.
+This document describes the Python application defined in `app.py`. It provides several utility functions and a simple `Calculator` class for basic arithmetic operations.
 
-## Python Module: `app.py`
+## File: `app.py`
 
-The `app.py` module contains several standalone functions and a class designed for basic arithmetic operations and a "hello world" utility.
+This file contains standalone functions and a class for basic arithmetic operations.
 
 ### Functions
 
 #### `hello_world()`
 
-A simple function that prints "Hello, World!" to the console and returns the same string.
+*   **Description:** A simple hello world function.
+*   **Parameters:** None
+*   **Returns:** A string: `"Hello, World!"`
+*   **Side Effects:** Prints `"Hello, World!"` to the console.
 
-*   **Description**: Prints a greeting to standard output and returns the greeting string.
-*   **Parameters**: None
-*   **Returns**: `str` - The string "Hello, World!".
-
-**Example:**
+**Example Usage:**
 
 ```python
 import app
 
 message = app.hello_world()
-print(f"Returned: {message}")
+print(message)
+# Expected console output:
+# Hello, World!
+# Expected value of 'message': "Hello, World!"
 ```
 
 #### `calculate_sum(a, b)`
 
-Calculates the sum of two numbers.
+*   **Description:** Calculate the sum of two numbers.
+*   **Parameters:**
+    *   `a`: The first number. (Type not explicitly specified in code, typically numeric.)
+    *   `b`: The second number. (Type not explicitly specified in code, typically numeric.)
+*   **Returns:** The sum of `a` and `b`.
 
-*   **Description**: Takes two numerical arguments and returns their sum.
-*   **Parameters**:
-    *   `a`: (Any numeric type) The first number.
-    *   `b`: (Any numeric type) The second number.
-*   **Returns**: (Numeric type) The sum of `a` and `b`.
-
-**Example:**
+**Example Usage:**
 
 ```python
 import app
 
 result = app.calculate_sum(5, 3)
-print(f"Sum: {result}") # Output: Sum: 8
+print(result)
+# Expected Output: 8
 ```
 
 #### `multiply(a, b)`
 
-Multiplies two numbers.
+*   **Description:** Multiplies two numbers. (No docstring provided in code.)
+*   **Parameters:**
+    *   `a`: The first number. (Type not explicitly specified in code, typically numeric.)
+    *   `b`: The second number. (Type not explicitly specified in code, typically numeric.)
+*   **Returns:** The product of `a` and `b`.
 
-*   **Description**: Takes two numerical arguments and returns their product.
-*   **Parameters**:
-    *   `a`: (Any numeric type) The first number.
-    *   `b`: (Any numeric type) The second number.
-*   **Returns**: (Numeric type) The product of `a` and `b`.
-
-**Example:**
+**Example Usage:**
 
 ```python
 import app
 
-result = app.multiply(4, 6)
-print(f"Product: {result}") # Output: Product: 24
+result = app.multiply(4, 2)
+print(result)
+# Expected Output: 8
 ```
 
 ### Class: `Calculator`
 
-A simple class designed to perform addition and maintain a history of these additions.
+*   **Description:** A simple calculator class.
 
-#### Constructor: `__init__(self)`
+#### `__init__(self)`
 
-Initializes a new `Calculator` instance.
+*   **Description:** Initializes a new `Calculator` instance.
+*   **Parameters:** `self` (the instance itself)
+*   **Initializes:** An empty list `self.history` to store calculation records.
 
-*   **Description**: Sets up the calculator, initializing an empty list to store calculation history.
-*   **Parameters**: None
-
-**Example:**
+**Example Usage:**
 
 ```python
 import app
 
-my_calculator = app.Calculator()
+calculator = app.Calculator()
+print(calculator.history)
+# Expected Output: []
 ```
 
-#### Method: `add(self, a, b)`
+#### `add(self, a, b)`
 
-Adds two numbers and stores the operation in the calculator's history.
+*   **Description:** Add two numbers and store in history.
+*   **Parameters:**
+    *   `self`: The instance of the `Calculator` class.
+    *   `a`: The first number to add. (Type not explicitly specified in code, typically numeric.)
+    *   `b`: The second number to add. (Type not explicitly specified in code, typically numeric.)
+*   **Returns:** The sum of `a` and `b`.
+*   **Side Effects:** Appends a string representation of the operation and its result (e.g., `"5 + 3 = 8"`) to the `self.history` list.
 
-*   **Description**: Performs an addition operation on two numbers. The operation and its result are formatted as a string and appended to the `history` list of the `Calculator` instance.
-*   **Parameters**:
-    *   `a`: (Any numeric type) The first number.
-    *   `b`: (Any numeric type) The second number.
-*   **Returns**: (Numeric type) The sum of `a` and `b`.
-
-**Example:**
+**Example Usage:**
 
 ```python
 import app
 
-my_calculator = app.Calculator()
-sum_result = my_calculator.add(10, 7)
-print(f"Added: {sum_result}") # Output: Added: 17
+calculator = app.Calculator()
+sum_result = calculator.add(10, 20)
+print(sum_result)
+# Expected Output: 30
+print(calculator.get_history())
+# Expected Output: ['10 + 20 = 30']
 ```
 
-#### Method: `get_history(self)`
+#### `get_history(self)`
 
-Retrieves the calculation history of the `Calculator` instance.
+*   **Description:** Get calculation history.
+*   **Parameters:**
+    *   `self`: The instance of the `Calculator` class.
+*   **Returns:** A list of strings, where each string represents a past addition operation stored by the `add` method (e.g., `["10 + 20 = 30", "5 + 2 = 7"]`).
 
-*   **Description**: Returns a list containing strings that represent past addition operations performed by this calculator instance.
-*   **Parameters**: None
-*   **Returns**: `list` - A list of strings, each detailing an addition operation (e.g., "10 + 7 = 17").
-
-**Example:**
+**Example Usage:**
 
 ```python
 import app
 
-my_calculator = app.Calculator()
-my_calculator.add(10, 7)
-my_calculator.add(25, 15)
-history = my_calculator.get_history()
-print("Calculation History:")
-for entry in history:
-    print(entry)
-# Output:
-# Calculation History:
-# 10 + 7 = 17
-# 25 + 15 = 40
+calculator = app.Calculator()
+calculator.add(5, 2)
+calculator.add(100, 50)
+history = calculator.get_history()
+print(history)
+# Expected Output: ['5 + 2 = 7', '100 + 50 = 150']
 ```
