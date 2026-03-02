@@ -2,7 +2,7 @@ name: AI Documentation Intelligence System
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, master, develop]
   pull_request:
     types: [opened, synchronize, reopened]
   release:
