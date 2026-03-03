@@ -1,152 +1,43 @@
-# Code Documentation
+# Palindrome Checker
 
-This document describes the Python code provided in `app.py`.
+This repository contains a simple Python module designed to check if a given string is a palindrome.
 
 ## `app.py`
 
-This file contains several utility functions and a simple `Calculator` class for basic arithmetic operations.
+The `app.py` file provides a single utility function for palindrome detection.
 
-### Functions
+### Function Reference
 
-#### `hello_world()`
+#### `palindrome(s)`
 
-A simple function that prints "Hello, World!" to the console and returns the same string.
+Checks if a string is a palindrome. A palindrome is a word, phrase, or sequence that reads the same backward as forward.
 
-**Signature:**
-```python
-hello_world()
-```
+*   **Description:** This function takes a string `s` and determines whether it is a palindrome. It achieves this by comparing the original string with its reversed version.
 
-**Returns:**
-*   `str`: The string "Hello, World!".
+*   **Parameters:**
+    *   `s` (str): The input string to be checked.
 
-**Example Usage:**
-```python
-message = hello_world()
-# Output: Hello, World!
-print(message)
-# Output: Hello, World!
-```
+*   **Returns:**
+    *   `bool`: `True` if the string `s` is a palindrome, `False` otherwise.
 
-#### `calculate_sum(a, b)`
+*   **Example Usage:**
 
-Calculates the sum of two numbers.
+    ```python
+    from app import palindrome
 
-**Signature:**
-```python
-calculate_sum(a, b)
-```
+    # Example 1: Palindrome
+    print(palindrome("madam"))
+    # Expected output: True
 
-**Parameters:**
-*   `a`: (Number) The first number.
-*   `b`: (Number) The second number.
+    # Example 2: Not a palindrome
+    print(palindrome("hello"))
+    # Expected output: False
 
-**Returns:**
-*   (Number): The sum of `a` and `b`.
+    # Example 3: Empty string (is considered a palindrome)
+    print(palindrome(""))
+    # Expected output: True
 
-**Example Usage:**
-```python
-result = calculate_sum(5, 3)
-print(result)
-# Output: 8
-```
-
-#### `multiply(a, b)`
-
-Calculates the product of two numbers.
-
-**Signature:**
-```python
-multiply(a, b)
-```
-
-**Parameters:**
-*   `a`: (Number) The first number.
-*   `b`: (Number) The second number.
-
-**Returns:**
-*   (Number): The product of `a` and `b`.
-
-**Example Usage:**
-```python
-result = multiply(4, 6)
-print(result)
-# Output: 24
-```
-
-### Class `Calculator`
-
-A simple class designed to perform addition and maintain a history of these operations.
-
-**Signature:**
-```python
-class Calculator:
-    # ...
-```
-
-#### `__init__()`
-
-The constructor for the `Calculator` class. It initializes an empty list to store the history of calculations.
-
-**Signature:**
-```python
-__init__(self)
-```
-
-**Parameters:**
-*   `self`: The instance of the class.
-
-**Example Usage:**
-```python
-my_calculator = Calculator()
-```
-
-#### `add(self, a, b)`
-
-Adds two numbers, stores the operation and its result in the calculator's history, and returns the result.
-
-**Signature:**
-```python
-add(self, a, b)
-```
-
-**Parameters:**
-*   `self`: The instance of the class.
-*   `a`: (Number) The first number.
-*   `b`: (Number) The second number.
-
-**Returns:**
-*   (Number): The sum of `a` and `b`.
-
-**Example Usage:**
-```python
-my_calculator = Calculator()
-sum_result = my_calculator.add(10, 20)
-print(sum_result)
-# Output: 30
-```
-
-#### `get_history(self)`
-
-Retrieves the list of stored calculation history entries. Each entry is a formatted string representing an addition operation and its result.
-
-**Signature:**
-```python
-get_history(self)
-```
-
-**Parameters:**
-*   `self`: The instance of the class.
-
-**Returns:**
-*   `list[str]`: A list of strings, where each string is a record of an addition operation (e.g., "10 + 20 = 30").
-
-**Example Usage:**
-```python
-my_calculator = Calculator()
-my_calculator.add(10, 5)
-my_calculator.add(7, 3)
-history = my_calculator.get_history()
-print(history)
-# Output: ['10 + 5 = 15', '7 + 3 = 10']
-```
+    # Example 4: Single character string (is considered a palindrome)
+    print(palindrome("a"))
+    # Expected output: True
+    ```
