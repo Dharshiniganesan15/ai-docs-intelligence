@@ -1,98 +1,152 @@
-# Project Documentation
+# Code Documentation
 
-This document provides a comprehensive overview of the `app.py` file, detailing its functions and classes as defined in the provided Python code.
+This document describes the Python code provided in `app.py`.
 
 ## `app.py`
 
-This Python file contains several standalone functions and a class designed for basic arithmetic operations and a simple "hello world" utility.
+This file contains several utility functions and a simple `Calculator` class for basic arithmetic operations.
 
 ### Functions
 
-The file defines the following top-level functions:
-
 #### `hello_world()`
 
-*   **Description**: A simple function that prints a greeting to the console and returns the same greeting string.
-*   **Returns**:
-    *   `str`: The string "Hello, World!".
+A simple function that prints "Hello, World!" to the console and returns the same string.
+
+**Signature:**
+```python
+hello_world()
+```
+
+**Returns:**
+*   `str`: The string "Hello, World!".
+
+**Example Usage:**
+```python
+message = hello_world()
+# Output: Hello, World!
+print(message)
+# Output: Hello, World!
+```
 
 #### `calculate_sum(a, b)`
 
-*   **Description**: Calculates the sum of two input numbers.
-*   **Parameters**:
-    *   `a`: The first number.
-    *   `b`: The second number.
-*   **Returns**:
-    *   The sum of `a` and `b`. The type of the return value will depend on the input types (e.g., `int` if both `a` and `b` are `int`, `float` if either is `float`).
+Calculates the sum of two numbers.
 
-#### `d e f m u l t i p l y ( a , b )`
+**Signature:**
+```python
+calculate_sum(a, b)
+```
 
-A function definition is present in the code as `d e f m u l t i p l y ( a , b ) :`. While this specific formatting with spaces between keywords and the function name is not valid Python syntax for a function definition (it would result in a `SyntaxError`), its body `return a * b` clearly indicates an intent to calculate the product of two numbers.
+**Parameters:**
+*   `a`: (Number) The first number.
+*   `b`: (Number) The second number.
 
-*   **Intended Purpose**: To calculate the product of two numbers.
-*   **Parameters (Intended)**:
-    *   `a`: The first number.
-    *   `b`: The second number.
-*   **Returns (Intended)**:
-    *   The product of `a` and `b`. The type of the return value would depend on the input types.
+**Returns:**
+*   (Number): The sum of `a` and `b`.
 
-### Class: `Calculator`
+**Example Usage:**
+```python
+result = calculate_sum(5, 3)
+print(result)
+# Output: 8
+```
 
-The `Calculator` class provides functionality for performing additions and keeping a history of these operations.
+#### `multiply(a, b)`
 
-#### `__init__(self)`
+Calculates the product of two numbers.
 
-*   **Description**: The constructor for the `Calculator` class. It initializes an empty list to store the history of calculations.
-*   **Attributes**:
-    *   `history` (list): An empty list that will store strings representing completed addition operations.
+**Signature:**
+```python
+multiply(a, b)
+```
+
+**Parameters:**
+*   `a`: (Number) The first number.
+*   `b`: (Number) The second number.
+
+**Returns:**
+*   (Number): The product of `a` and `b`.
+
+**Example Usage:**
+```python
+result = multiply(4, 6)
+print(result)
+# Output: 24
+```
+
+### Class `Calculator`
+
+A simple class designed to perform addition and maintain a history of these operations.
+
+**Signature:**
+```python
+class Calculator:
+    # ...
+```
+
+#### `__init__()`
+
+The constructor for the `Calculator` class. It initializes an empty list to store the history of calculations.
+
+**Signature:**
+```python
+__init__(self)
+```
+
+**Parameters:**
+*   `self`: The instance of the class.
+
+**Example Usage:**
+```python
+my_calculator = Calculator()
+```
 
 #### `add(self, a, b)`
 
-*   **Description**: Adds two numbers and records the operation and its result in the calculator's history.
-*   **Parameters**:
-    *   `a`: The first number to add.
-    *   `b`: The second number to add.
-*   **Returns**:
-    *   The sum of `a` and `b`.
-*   **Side Effects**: Appends a formatted string (e.g., "5 + 3 = 8") representing the operation and its result to the `history` list.
+Adds two numbers, stores the operation and its result in the calculator's history, and returns the result.
+
+**Signature:**
+```python
+add(self, a, b)
+```
+
+**Parameters:**
+*   `self`: The instance of the class.
+*   `a`: (Number) The first number.
+*   `b`: (Number) The second number.
+
+**Returns:**
+*   (Number): The sum of `a` and `b`.
+
+**Example Usage:**
+```python
+my_calculator = Calculator()
+sum_result = my_calculator.add(10, 20)
+print(sum_result)
+# Output: 30
+```
 
 #### `get_history(self)`
 
-*   **Description**: Retrieves the complete history of calculations performed by the calculator instance.
-*   **Returns**:
-    *   `list`: A list of strings, where each string represents a recorded addition operation and its result.
+Retrieves the list of stored calculation history entries. Each entry is a formatted string representing an addition operation and its result.
 
-### Usage Examples
-
-Below are simple demonstrations of how to interact with the documented functions and class.
-
+**Signature:**
 ```python
-from app import hello_world, calculate_sum, Calculator # Note: `multiply` is omitted due to its invalid syntax in the provided code.
+get_history(self)
+```
 
-# --- Using hello_world ---
-print(hello_world())
+**Parameters:**
+*   `self`: The instance of the class.
 
-# --- Using calculate_sum ---
-sum_result = calculate_sum(10, 5)
-print(f"The sum is: {sum_result}") # Output: The sum is: 15
+**Returns:**
+*   `list[str]`: A list of strings, where each string is a record of an addition operation (e.g., "10 + 20 = 30").
 
-# --- Using the Calculator class ---
+**Example Usage:**
+```python
 my_calculator = Calculator()
-
-# Perform additions
-add_result1 = my_calculator.add(7, 3)
-print(f"7 + 3 = {add_result1}") # Output: 7 + 3 = 10
-
-add_result2 = my_calculator.add(20, 15)
-print(f"20 + 15 = {add_result2}") # Output: 20 + 15 = 35
-
-# Retrieve history
-history_items = my_calculator.get_history()
-print("Calculation History:")
-for item in history_items:
-    print(item)
-# Expected Output:
-# Calculation History:
-# 7 + 3 = 10
-# 20 + 15 = 35
+my_calculator.add(10, 5)
+my_calculator.add(7, 3)
+history = my_calculator.get_history()
+print(history)
+# Output: ['10 + 5 = 15', '7 + 3 = 10']
 ```
